@@ -88,7 +88,7 @@ class OverscrollEffectBase extends Component {
 
 	render () {
 		const
-			{className, position, rtl, orientation, ...rest} = this.props,
+			{className, position, orientation, ...rest} = this.props,
 			overscrollClasses = classNames(className, css.overscroll, css[orientation], css[position]);
 
 		delete rest.setApiProvider;
