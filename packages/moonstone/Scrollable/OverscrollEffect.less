@@ -25,19 +25,19 @@
 	height: 70%;
 	transform: translateY(-50%) scale3d(1, 0, 1);
 
-	&.after {
-		right: 0;
-		:global(.enact-locale-right-to-left) & {
-			left: 0;
-			right: auto;
-		}
-	}
-
 	&.before {
 		left: 0;
 		:global(.enact-locale-right-to-left) & {
 			left: auto;
 			right: 0;
+		}
+	}
+
+	&.after {
+		right: 0;
+		:global(.enact-locale-right-to-left) & {
+			left: 0;
+			right: auto;
 		}
 	}
 
@@ -52,19 +52,19 @@
 	height: 6px;
 	transform: translateX(-50%) scale3d(0, 1, 1);
 
-	&.after {
-		bottom: 0;
-		:global(.enact-locale-right-to-left) & {
-			top: 0;
-			bottom: auto;
-		}
-	}
-
 	&.before {
 		top: 0;
 		:global(.enact-locale-right-to-left) & {
 			top: auto;
 			bottom: 0;
+		}
+	}
+
+	&.after {
+		bottom: 0;
+		:global(.enact-locale-right-to-left) & {
+			top: 0;
+			bottom: auto;
 		}
 	}
 
