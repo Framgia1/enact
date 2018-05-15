@@ -182,7 +182,7 @@ class ScrollableBaseNative extends Component {
 	nodeToFocus = null
 
 	// overscroll
-	overscrollRefs = {[true]: {}, [false]: {}} // `true` for vertical and `false` for horizontal
+	overscrollRefs = {['horizontal']: {}, ['vertical']: {}}
 
 	// browser native scrolling
 	resetPosition = null // prevent auto-scroll on focus by Spotlight
@@ -247,7 +247,7 @@ class ScrollableBaseNative extends Component {
 					needToHideThumb = !delta;
 				}
 			} else {
-				this.uiRef.updateOverscrollEffect(true, !(this.uiRef.scrollTop === 0));
+				this.uiRef.updateOverscrollEffect('vertical', this.uiRef.scrollTop === 0 ? 'before' : 'after');
 				needToHideThumb = true;
 			}
 		} else if (canScrollHorizontally) { // this routine handles wheel events on any children for horizontal scroll.
@@ -259,7 +259,7 @@ class ScrollableBaseNative extends Component {
 				delta = this.uiRef.calculateDistanceByWheel(eventDeltaMode, eventDelta, bounds.clientWidth * scrollWheelPageMultiplierForMaxPixel);
 				needToHideThumb = !delta;
 			} else {
-				this.uiRef.updateOverscrollEffect(false, !(this.uiRef.scrollLeft === 0));
+				this.uiRef.updateOverscrollEffect('horizontal', this.uiRef.scrollLeft === 0 ? 'before' : 'after');
 				needToHideThumb = true;
 			}
 		}
@@ -526,8 +526,8 @@ class ScrollableBaseNative extends Component {
 		this.uiRef.bounds.scrollHeight = this.uiRef.getScrollBounds().scrollHeight;
 	}
 
-	updateOverscrollEffect = (vertical, forth) => {
-		const ref = this.overscrollRefs[vertical][forth];
+	updateOverscrollEffect = (orientation, position) => {
+		const ref = this.overscrollRefs[orientation][position];
 
 		if (ref) {
 			ref.update();
@@ -552,9 +552,11 @@ class ScrollableBaseNative extends Component {
 		}
 	}
 
-	initOverscrollRef = (vertical, forth) => (ref) => {
+	initOverscrollRef = (ref) => {
+		const {orientation, position} = ref.props;
+
 		if (ref) {
-			this.overscrollRefs[vertical][forth] = ref;
+			this.overscrollRefs[orientation][position] = ref;
 		}
 	}
 
@@ -570,6 +572,25 @@ class ScrollableBaseNative extends Component {
 		}
 	}
 
+	getOverscrollEffects = (orientation) => ([
+		<OverscrollEffect key={orientation + 'before'} orientation={orientation} position="before" ref={this.initOverscrollRef} />,
+		<OverscrollEffect key={orientation + 'after'} orientation={orientation} position="after" ref={this.initOverscrollRef} />
+	])
+
+	overscrollEffectRenderer = () => {
+		if (this.uiRef) {
+			const
+				{getOverscrollEffects} = this,
+				bounds = this.uiRef.getScrollBounds(),
+				horizontalEffects = this.uiRef.canScrollHorizontally(bounds) ? getOverscrollEffects('horizontal') : [],
+				verticalEffects = this.uiRef.canScrollVertically(bounds) ? getOverscrollEffects('vertical') : [];
+
+			return horizontalEffects.concat(verticalEffects);
+		} else {
+			return null;
+		}
+	}
+
 	render () {
 		const
 			{
@@ -582,6 +603,7 @@ class ScrollableBaseNative extends Component {
 				scrollUpAriaLabel,
 				...rest
 			} = this.props,
+			{overscrollEffectRenderer} = this,
 			downButtonAriaLabel = scrollDownAriaLabel == null ? $L('scroll down') : scrollDownAriaLabel,
 			upButtonAriaLabel = scrollUpAriaLabel == null ? $L('scroll up') : scrollUpAriaLabel,
 			rightButtonAriaLabel = scrollRightAriaLabel == null ? $L('scroll right') : scrollRightAriaLabel,
@@ -635,10 +657,7 @@ class ScrollableBaseNative extends Component {
 									rtl,
 									spotlightId
 								})}
-								<OverscrollEffect forth rtl={rtl} vertical ref={this.initOverscrollRef(true, true)} />
-								<OverscrollEffect rtl={rtl} vertical ref={this.initOverscrollRef(true, false)} />
-								<OverscrollEffect forth rtl={rtl} ref={this.initOverscrollRef(false, true)} />
-								<OverscrollEffect rtl={rtl} ref={this.initOverscrollRef(false, false)} />
+								{overscrollEffectRenderer()}
 							</TouchableDiv>
 							{isVerticalScrollbarVisible ?
 								<Scrollbar

@@ -15,23 +15,20 @@ class OverscrollEffectBase extends Component {
 
 	static propTypes = /** @lends moonstone/Scrollable.OverscrollEffect.prototype */ {
 		/**
-		 * Indicates where the effect is located in.
-		 * `true` if the effect is located in the forward edge.
+		 * Indicates which direction of scrolling the overscroll shows for.
 		 *
-		 * @type {Boolean}
-		 * @default false
-		 * @private
+		 * @type {String}
+		 * @public
 		 */
-		forth: PropTypes.bool,
+		orientation: PropTypes.string,
 
 		/**
-		 * `true` if rtl, `false` if ltr.
+		 * Indicates where the effect is located in.
 		 *
-		 * @type {Boolean}
-		 * @default false
+		 * @type {String}
 		 * @private
 		 */
-		rtl: PropTypes.bool,
+		position: PropTypes.string,
 
 		/**
 		 * Registers the OverscrollEffect component with an
@@ -40,23 +37,7 @@ class OverscrollEffectBase extends Component {
 		 * @type {Function}
 		 * @private
 		 */
-		setApiProvider: PropTypes.func,
-
-		/**
-		 * Indicates which direction of scrolling the overscroll shows for.
-		 * If `true`, the oversroll effect shows for the vertical scrolling.
-		 *
-		 * @type {Boolean}
-		 * @default false
-		 * @public
-		 */
-		vertical: PropTypes.bool
-	}
-
-	static defaultProps = {
-		forth: false,
-		rtl: false,
-		vertical: false
+		setApiProvider: PropTypes.func
 	}
 
 	constructor (props) {
@@ -67,10 +48,6 @@ class OverscrollEffectBase extends Component {
 		if (props.setApiProvider) {
 			props.setApiProvider(this);
 		}
-	}
-
-	componentDidMount () {
-		this.ref.style.setProperty('--moon-overscroll-duration', timeout + 'ms');
 	}
 
 	componentWillUnmount () {
@@ -111,13 +88,8 @@ class OverscrollEffectBase extends Component {
 
 	render () {
 		const
-			{className, forth, rtl, vertical, ...rest} = this.props,
-			overscrollClasses = classNames(
-				className,
-				css.overscroll,
-				vertical ? css.vertical : css.horizontal,
-				(forth !== (rtl && !vertical)) ? css.forward : css.backward
-			);
+			{className, position, rtl, orientation, ...rest} = this.props,
+			overscrollClasses = classNames(className, css.overscroll, css[orientation], css[position]);
 
 		delete rest.setApiProvider;
 

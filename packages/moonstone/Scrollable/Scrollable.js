@@ -202,7 +202,7 @@ class ScrollableBase extends Component {
 	nodeToFocus = null
 
 	// overscroll
-	overscrollRefs = {[true]: {}, [false]: {}} // `true` for vertical and `false` for horizontal
+	overscrollRefs = {['horizontal']: {}, ['vertical']: {}}
 
 	onFlick = () => {
 		const focusedItem = Spotlight.getCurrent();
@@ -479,8 +479,8 @@ class ScrollableBase extends Component {
 		this.uiRef.bounds.scrollHeight = this.uiRef.getScrollBounds().scrollHeight;
 	}
 
-	updateOverscrollEffect = (vertical, forth) => {
-		const ref = this.overscrollRefs[vertical][forth];
+	updateOverscrollEffect = (orientation, position) => {
+		const ref = this.overscrollRefs[orientation][position];
 
 		if (ref) {
 			ref.update();
@@ -501,9 +501,11 @@ class ScrollableBase extends Component {
 		}
 	}
 
-	initOverscrollRef = (vertical, forth) => (ref) => {
+	initOverscrollRef = (ref) => {
+		const {orientation, position} = ref.props;
+
 		if (ref) {
-			this.overscrollRefs[vertical][forth] = ref;
+			this.overscrollRefs[orientation][position] = ref;
 		}
 	}
 
@@ -519,6 +521,25 @@ class ScrollableBase extends Component {
 		}
 	}
 
+	getOverscrollEffects = (orientation) => ([
+		<OverscrollEffect key={orientation + 'before'} orientation={orientation} position="before" ref={this.initOverscrollRef} />,
+		<OverscrollEffect key={orientation + 'after'} orientation={orientation} position="after" ref={this.initOverscrollRef} />
+	])
+
+	overscrollEffectRenderer = () => {
+		if (this.uiRef) {
+			const
+				{getOverscrollEffects} = this,
+				bounds = this.uiRef.getScrollBounds(),
+				horizontalEffects = this.uiRef.canScrollHorizontally(bounds) ? getOverscrollEffects('horizontal') : [],
+				verticalEffects = this.uiRef.canScrollVertically(bounds) ? getOverscrollEffects('vertical') : [];
+
+			return horizontalEffects.concat(verticalEffects);
+		} else {
+			return null;
+		}
+	}
+
 	render () {
 		const
 			{
@@ -531,6 +552,7 @@ class ScrollableBase extends Component {
 				scrollUpAriaLabel,
 				...rest
 			} = this.props,
+			{overscrollEffectRenderer} = this,
 			downButtonAriaLabel = scrollDownAriaLabel == null ? $L('scroll down') : scrollDownAriaLabel,
 			upButtonAriaLabel = scrollUpAriaLabel == null ? $L('scroll up') : scrollUpAriaLabel,
 			rightButtonAriaLabel = scrollRightAriaLabel == null ? $L('scroll right') : scrollRightAriaLabel,
@@ -585,10 +607,7 @@ class ScrollableBase extends Component {
 									rtl,
 									spotlightId
 								})}
-								<OverscrollEffect forth rtl={rtl} vertical ref={this.initOverscrollRef(true, true)} />
-								<OverscrollEffect rtl={rtl} vertical ref={this.initOverscrollRef(true, false)} />
-								<OverscrollEffect forth rtl={rtl} ref={this.initOverscrollRef(false, true)} />
-								<OverscrollEffect rtl={rtl} ref={this.initOverscrollRef(false, false)} />
+								{overscrollEffectRenderer()}
 							</TouchableDiv>
 							{isVerticalScrollbarVisible ?
 								<Scrollbar
