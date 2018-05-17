@@ -1,3 +1,4 @@
+import classNames from 'classnames';
 import {constants, ScrollableBaseNative as UiScrollableBaseNative} from '@enact/ui/Scrollable/ScrollableNative';
 import {getTargetByDirectionFromPosition} from '@enact/spotlight/src/target';
 import PropTypes from 'prop-types';
@@ -8,10 +9,10 @@ import Touchable from '@enact/ui/Touchable';
 
 import $L from '../internal/$L';
 
-import OverscrollEffect from './OverscrollEffect';
 import Scrollbar from './Scrollbar';
 
 import scrollbarCss from './Scrollbar.less';
+import overscrollCss from './OverscrollEffect.less';
 
 const
 	{
@@ -538,11 +539,25 @@ class ScrollableBaseNative extends Component {
 		}
 	}
 
-	updateOverscrollEffect = (orientation, position) => {
-		const ref = this.overscrollRefs[orientation][position];
+	playOverscrollEffect = (nodeRef, orientation, position, ratio) => {
+		const prefix = '--moon-scrollable-overscroll-ratio-';
 
-		if (ref) {
-			ref.update();
+		nodeRef.style.setProperty(prefix + orientation + position, ratio);
+		if (ratio > 0) {
+			setTimeout(this.updateOverscrollEffect, 300, orientation, position, 0);
+		}
+	}
+
+	updateOverscrollEffect = (orientation, position, ratio = 1) => {
+		const
+			playOverscrollEffect = this.playOverscrollEffect,
+			{horizontalOverscrollRef, verticalOverscrollRef} = this,
+			{horizontal, vertical} = this.getScrollabilities();
+
+		if (horizontal && horizontalOverscrollRef) {
+			playOverscrollEffect(horizontalOverscrollRef, orientation, position, ratio);
+		} else if (vertical && verticalOverscrollRef) {
+			playOverscrollEffect(verticalOverscrollRef, orientation, position, ratio);
 		}
 	}
 
@@ -564,10 +579,15 @@ class ScrollableBaseNative extends Component {
 		}
 	}
 
-	initOverscrollRef = (ref) => {
+	initHorizontalOverscrollRef = (ref) => {
 		if (ref) {
-			const {orientation, position} = ref.props;
-			this.overscrollRefs[orientation][position] = ref;
+			this.horizontalOverscrollRef = ref;
+		}
+	}
+
+	initVerticalOverscrollRef = (ref) => {
+		if (ref) {
+			this.verticalOverscrollRef = ref;
 		}
 	}
 
@@ -595,7 +615,6 @@ class ScrollableBaseNative extends Component {
 				scrollUpAriaLabel,
 				...rest
 			} = this.props,
-			{horizontal: horizontalEffects, vertical: verticalEffects} = this.getScrollabilities(),
 			downButtonAriaLabel = scrollDownAriaLabel == null ? $L('scroll down') : scrollDownAriaLabel,
 			upButtonAriaLabel = scrollUpAriaLabel == null ? $L('scroll up') : scrollUpAriaLabel,
 			rightButtonAriaLabel = scrollRightAriaLabel == null ? $L('scroll right') : scrollRightAriaLabel,
@@ -638,7 +657,7 @@ class ScrollableBaseNative extends Component {
 						ref={initUiContainerRef}
 						style={style}
 					>
-						<div className={componentCss.container}>
+						<div className={classNames(componentCss.container, overscrollCss.verticalEffects)} ref={this.initVerticalOverscrollRef}>
 							<TouchableDiv {...touchableProps}>
 								{childRenderer({
 									...childComponentProps,
@@ -649,10 +668,6 @@ class ScrollableBaseNative extends Component {
 									rtl,
 									spotlightId
 								})}
-								{horizontalEffects ? <OverscrollEffect key={'horizontal before'} orientation={'horizontal'} position="before" ref={this.initOverscrollRef} /> : null}
-								{horizontalEffects ? <OverscrollEffect key={'horizontal after'} orientation={'horizontal'} position="after" ref={this.initOverscrollRef} /> : null}
-								{verticalEffects ? <OverscrollEffect key={'vertical before'} orientation={'vertical'} position="before" ref={this.initOverscrollRef} /> : null}
-								{verticalEffects ? <OverscrollEffect key={'vertical after'} orientation={'vertical'} position="after" ref={this.initOverscrollRef} /> : null}
 							</TouchableDiv>
 							{isVerticalScrollbarVisible ?
 								<Scrollbar

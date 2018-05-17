@@ -1,9 +1,21 @@
+// OverscrollEffect.less
+//
+@import '~@enact/ui/Scrollable/Scrollable.less';
+
 @import '../styles/variables.less';
 @import '../styles/skin.less';
 
+:root {
+	--moon-scrollable-overscroll-ratio-horizontalbefore: 0;
+	--moon-scrollable-overscroll-ratio-horizontalafter: 0;
+	--moon-scrollable-overscroll-ratio-verticalbefore: 0;
+	--moon-scrollable-overscroll-ratio-verticalafter: 0;
+}
+
 .overscroll {
-	display: none;
+	display: block;
 	position: absolute;
+	content: "";
 	border-radius: 50%;
 	transition-duration: @moon-scrollable-overscroll-duration;
 	transition-property: transform;
@@ -15,60 +27,71 @@
 
 	// Skin colors
 	.applySkins({
-		background-color: @moon-accent;
+		background-color: @moon-accent; // TBD: do we need to use Skinnable for Scrollable to use this?
 	});
+	background-color: yellow;
 }
 
 .horizontal {
+	.overscroll;
+
 	top: 50%; // Center the element
 	width: 6px;
-	height: 70%;
-	transform: translateY(-50%) scale3d(1, 0, 1);
+	// height: 70%; // TBD for testing
+	height: 100%; // TBD for testing
+}
 
-	&.before {
-		left: 0;
-		:global(.enact-locale-right-to-left) & {
-			left: auto;
-			right: 0;
-		}
-	}
+.horizontalEffects::before {
+	.horizontal;
 
-	&.after {
+	transform: translateY(-50%) scale3d(calc((2 - var(--moon-scrollable-overscroll-ratio-horizontalbefore)) / 2), var(--moon-scrollable-overscroll-ratio-horizontalbefore), 1);
+	left: 0;
+
+	:global(.enact-locale-right-to-left) & {
+		left: auto;
 		right: 0;
-		:global(.enact-locale-right-to-left) & {
-			left: 0;
-			right: auto;
-		}
 	}
+}
 
-	&.expand {
-		transform: translateY(-50%) scale3d(0.5, 1, 1);
+.horizontalEffects::after {
+	.horizontal;
+
+	transform: translateY(-50%) scale3d(calc((2 - var(--moon-scrollable-overscroll-ratio-horizontalafter)) / 2), var(--moon-scrollable-overscroll-ratio-horizontalafter), 1);
+	right: 0;
+
+	:global(.enact-locale-right-to-left) & {
+		left: 0;
+		right: auto;
 	}
 }
 
 .vertical {
+	.overscroll;
+
 	left: 50%; // Center the element
-	width: 70%;
+	// width: 70%; // TBD for testing
+	width: 100%; // TBD for testing
 	height: 6px;
-	transform: translateX(-50%) scale3d(0, 1, 1);
+}
 
-	&.before {
-		top: 0;
-		:global(.enact-locale-right-to-left) & {
-			top: auto;
-			bottom: 0;
-		}
-	}
+.verticalEffects::before {
+	.vertical;
 
-	&.after {
+	transform: translateX(-50%) scale3d(var(--moon-scrollable-overscroll-ratio-verticalbefore), calc((2 - var(--moon-scrollable-overscroll-ratio-verticalbefore)) / 2), 1);
+	top: 0;
+	:global(.enact-locale-right-to-left) & {
+		top: auto;
 		bottom: 0;
-		:global(.enact-locale-right-to-left) & {
-			top: 0;
-			bottom: auto;
-		}
 	}
+}
 
-	&.expand {
-		transform: translateX(-50%) scale3d(1, 0.5, 1);
+.verticalEffects::after {
+	.vertical;
+
+	transform: translateX(-50%) scale3d(var(--moon-scrollable-overscroll-ratio-verticalafter), calc((2 - var(--moon-scrollable-overscroll-ratio-verticalafter)) / 2), 1);
+	bottom: 0;
+	:global(.enact-locale-right-to-left) & {
+		top: 0;
+		bottom: auto;
 	}
 }
