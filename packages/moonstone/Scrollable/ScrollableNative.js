@@ -3,6 +3,7 @@ import {constants, ScrollableBaseNative as UiScrollableBaseNative} from '@enact/
 import {getTargetByDirectionFromPosition} from '@enact/spotlight/src/target';
 import PropTypes from 'prop-types';
 import React, {Component} from 'react';
+import ReactDOM from 'react-dom';
 import Spotlight from '@enact/spotlight';
 import SpotlightContainerDecorator from '@enact/spotlight/SpotlightContainerDecorator';
 import Touchable from '@enact/ui/Touchable';
@@ -183,7 +184,7 @@ class ScrollableBaseNative extends Component {
 	nodeToFocus = null
 
 	// overscroll
-	overscrollRefs = {['horizontal']: {}, ['vertical']: {}}
+	overscrollRefs = {['horizontal']: null, ['vertical']: null}
 
 	// browser native scrolling
 	resetPosition = null // prevent auto-scroll on focus by Spotlight
@@ -551,13 +552,11 @@ class ScrollableBaseNative extends Component {
 	updateOverscrollEffect = (orientation, position, ratio = 1) => {
 		const
 			playOverscrollEffect = this.playOverscrollEffect,
-			{horizontalOverscrollRef, verticalOverscrollRef} = this,
-			{horizontal, vertical} = this.getScrollabilities();
+			nodeRef = this.overscrollRefs[orientation],
+			scrollability = this.getScrollabilities()[orientation];
 
-		if (horizontal && horizontalOverscrollRef) {
-			playOverscrollEffect(horizontalOverscrollRef, orientation, position, ratio);
-		} else if (vertical && verticalOverscrollRef) {
-			playOverscrollEffect(verticalOverscrollRef, orientation, position, ratio);
+		if (nodeRef && scrollability) {
+			playOverscrollEffect(nodeRef, orientation, position, ratio);
 		}
 	}
 
@@ -581,13 +580,13 @@ class ScrollableBaseNative extends Component {
 
 	initHorizontalOverscrollRef = (ref) => {
 		if (ref) {
-			this.horizontalOverscrollRef = ref;
+			this.overscrollRefs['horizontal'] = ReactDOM.findDOMNode(ref); // eslint-disable-line react/no-find-dom-node
 		}
 	}
 
 	initVerticalOverscrollRef = (ref) => {
 		if (ref) {
-			this.verticalOverscrollRef = ref;
+			this.overscrollRefs['vertical'] = ref;
 		}
 	}
 
@@ -647,7 +646,7 @@ class ScrollableBaseNative extends Component {
 					rtl,
 					scrollTo,
 					style,
-					touchableProps,
+					touchableProps: {className: touchableClassName, ...restTouchableProps},
 					verticalScrollbarProps
 				}) => (
 					<div
@@ -658,7 +657,7 @@ class ScrollableBaseNative extends Component {
 						style={style}
 					>
 						<div className={classNames(componentCss.container, overscrollCss.verticalEffects)} ref={this.initVerticalOverscrollRef}>
-							<TouchableDiv {...touchableProps}>
+							<TouchableDiv className={classNames(touchableClassName, overscrollCss.horizontalEffects)} ref={this.initHorizontalOverscrollRef} {...restTouchableProps}>
 								{childRenderer({
 									...childComponentProps,
 									cbScrollTo: scrollTo,

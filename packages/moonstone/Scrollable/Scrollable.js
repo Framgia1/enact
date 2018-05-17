@@ -12,6 +12,7 @@ import {constants, ScrollableBase as UiScrollableBase} from '@enact/ui/Scrollabl
 import {getTargetByDirectionFromPosition} from '@enact/spotlight/src/target';
 import PropTypes from 'prop-types';
 import React, {Component} from 'react';
+import ReactDOM from 'react-dom';
 import Spotlight from '@enact/spotlight';
 import SpotlightContainerDecorator from '@enact/spotlight/SpotlightContainerDecorator';
 import Touchable from '@enact/ui/Touchable';
@@ -203,7 +204,7 @@ class ScrollableBase extends Component {
 	nodeToFocus = null
 
 	// overscroll
-	overscrollRefs = {['horizontal']: {}, ['vertical']: {}}
+	overscrollRefs = {['horizontal']: null, ['vertical']: null}
 
 	onFlick = () => {
 		const focusedItem = Spotlight.getCurrent();
@@ -504,13 +505,11 @@ class ScrollableBase extends Component {
 	updateOverscrollEffect = (orientation, position, ratio = 1) => {
 		const
 			playOverscrollEffect = this.playOverscrollEffect,
-			{horizontalOverscrollRef, verticalOverscrollRef} = this,
-			{horizontal, vertical} = this.getScrollabilities();
+			nodeRef = this.overscrollRefs[orientation],
+			scrollability = this.getScrollabilities()[orientation];
 
-		if (horizontal && horizontalOverscrollRef) {
-			playOverscrollEffect(horizontalOverscrollRef, orientation, position, ratio);
-		} else if (vertical && verticalOverscrollRef) {
-			playOverscrollEffect(verticalOverscrollRef, orientation, position, ratio);
+		if (nodeRef && scrollability) {
+			playOverscrollEffect(nodeRef, orientation, position, ratio);
 		}
 	}
 
@@ -530,13 +529,13 @@ class ScrollableBase extends Component {
 
 	initHorizontalOverscrollRef = (ref) => {
 		if (ref) {
-			this.horizontalOverscrollRef = ref;
+			this.overscrollRefs['horizontal'] = ReactDOM.findDOMNode(ref); // eslint-disable-line react/no-find-dom-node
 		}
 	}
 
 	initVerticalOverscrollRef = (ref) => {
 		if (ref) {
-			this.verticalOverscrollRef = ref;
+			this.overscrollRefs['vertical'] = ref;
 		}
 	}
 
@@ -596,7 +595,7 @@ class ScrollableBase extends Component {
 					rtl,
 					scrollTo,
 					style,
-					touchableProps,
+					touchableProps: {className: touchableClassName, ...restTouchableProps},
 					verticalScrollbarProps
 				}) => (
 					<div
@@ -607,7 +606,7 @@ class ScrollableBase extends Component {
 						style={style}
 					>
 						<div className={classNames(componentCss.container, overscrollCss.verticalEffects)} ref={this.initVerticalOverscrollRef}>
-							<TouchableDiv {...touchableProps}>
+							<TouchableDiv className={classNames(touchableClassName, overscrollCss.horizontalEffects)} ref={this.initHorizontalOverscrollRef} {...restTouchableProps}>
 								{childRenderer({
 									...childComponentProps,
 									cbScrollTo: scrollTo,
