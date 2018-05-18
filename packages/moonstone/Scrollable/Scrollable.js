@@ -20,9 +20,10 @@ import Touchable from '@enact/ui/Touchable';
 import $L from '../internal/$L';
 
 import Scrollbar from './Scrollbar';
+import Skinnable from '../Skinnable';
 
-import scrollbarCss from './Scrollbar.less';
 import overscrollCss from './OverscrollEffect.less';
+import scrollbarCss from './Scrollbar.less';
 
 const
 	{
@@ -38,7 +39,9 @@ const
 		up: 'down'
 	};
 
-const TouchableDiv = Touchable('div');
+const
+	SkinnableDiv = Skinnable('div'),
+	TouchableDiv = Touchable('div');
 
 /**
  * The name of a custom attribute which indicates the index of an item in
@@ -599,7 +602,7 @@ class ScrollableBase extends Component {
 					verticalScrollbarProps
 				}) => (
 					<div
-						className={className}
+						className={classNames(className, overscrollCss.scrollable)}
 						data-spotlight-container={spotlightContainer}
 						data-spotlight-id={spotlightId}
 						ref={initUiContainerRef}
@@ -659,14 +662,14 @@ class ScrollableBase extends Component {
  * @ui
  * @public
  */
-const Scrollable = SpotlightContainerDecorator(
+const Scrollable = Skinnable(SpotlightContainerDecorator(
 	{
 		overflow: true,
 		preserveId: true,
 		restrict: 'self-first'
 	},
 	ScrollableBase
-);
+));
 
 export default Scrollable;
 export {
