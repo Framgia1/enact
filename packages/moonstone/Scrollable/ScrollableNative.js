@@ -11,9 +11,10 @@ import Touchable from '@enact/ui/Touchable';
 import $L from '../internal/$L';
 
 import Scrollbar from './Scrollbar';
+import Skinnable from '../Skinnable';
 
-import scrollbarCss from './Scrollbar.less';
 import overscrollCss from './OverscrollEffect.less';
+import scrollbarCss from './Scrollbar.less';
 
 const
 	{
@@ -709,14 +710,14 @@ class ScrollableBaseNative extends Component {
  * @ui
  * @private
  */
-const ScrollableNative = SpotlightContainerDecorator(
+const ScrollableNative = Skinnable(SpotlightContainerDecorator(
 	{
 		overflow: true,
 		preserveId: true,
 		restrict: 'self-first'
 	},
 	ScrollableBaseNative
-);
+));
 
 export default ScrollableNative;
 export {

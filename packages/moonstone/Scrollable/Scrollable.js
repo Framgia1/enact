@@ -10,6 +10,7 @@
 import classNames from 'classnames';
 import {constants, ScrollableBase as UiScrollableBase} from '@enact/ui/Scrollable';
 import {getTargetByDirectionFromPosition} from '@enact/spotlight/src/target';
+import {is} from '@enact/core/keymap';
 import PropTypes from 'prop-types';
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
@@ -30,8 +31,13 @@ const
 		animationDuration,
 		isPageDown,
 		isPageUp,
+		overscrollNeeds,
 		paginationPageMultiplier
 	} = constants,
+	isDown = is('down'),
+	isLeft = is('left'),
+	isRight = is('right'),
+	isUp = is('up'),
 	reverseDirections = {
 		down: 'up',
 		left: 'right',
@@ -39,9 +45,7 @@ const
 		up: 'down'
 	};
 
-const
-	SkinnableDiv = Skinnable('div'),
-	TouchableDiv = Touchable('div');
+const TouchableDiv = Touchable('div');
 
 /**
  * The name of a custom attribute which indicates the index of an item in
@@ -208,6 +212,7 @@ class ScrollableBase extends Component {
 
 	// overscroll
 	overscrollRefs = {['horizontal']: null, ['vertical']: null}
+	overscrollManualEffects = [] // manual(non-auto) effects
 
 	onFlick = () => {
 		const focusedItem = Spotlight.getCurrent();
@@ -248,6 +253,10 @@ class ScrollableBase extends Component {
 					animate: (animationDuration > 0) && this.animateOnFocus,
 					duration: animationDuration
 				});
+
+				if (this.childRef.shouldPreventOverscrollEffect ? !this.childRef.shouldPreventOverscrollEffect() : true) {
+					this.uiRef.setOverscrollStatus(overscrollNeeds.tracking);
+				}
 			}
 			this.lastFocusedItem = item;
 			this.lastScrollPositionOnFocus = pos;
@@ -398,8 +407,36 @@ class ScrollableBase extends Component {
 
 	onKeyDown = (ev) => {
 		this.animateOnFocus = true;
-		if (!Spotlight.getPointerMode() && (isPageUp(ev.keyCode) || isPageDown(ev.keyCode)) && !ev.repeat && this.hasFocus()) {
-			this.scrollByPage(ev.keyCode);
+
+		if (!Spotlight.getPointerMode() && !ev.repeat && this.hasFocus()) {
+			if (isPageUp(ev.keyCode) || isPageDown(ev.keyCode)) {
+				this.uiRef.setOverscrollStatus(overscrollNeeds.tracking);
+				this.scrollByPage(ev.keyCode);
+			} else {
+				const
+					{scrollLeft, scrollTop, updateOverscrollEffect} = this.uiRef,
+					isRtl = this.uiRef.state.rtl,
+					{maxLeft, maxTop} = this.uiRef.getScrollBounds(),
+					downKey = isDown(ev.keyCode),
+					leftKey = isLeft(ev.keyCode),
+					rightKey = isRight(ev.keyCode),
+					upKey = isUp(ev.keyCode);
+
+				if ((downKey || upKey) && 0 < maxTop) {
+					if (upKey && scrollTop === 0) {
+						updateOverscrollEffect('vertical', 'before');
+					} else if (downKey && scrollTop === maxTop) {
+						updateOverscrollEffect('vertical', 'after');
+					}
+				} else if ((leftKey || rightKey) && 0 < maxLeft) {
+					const forward = leftKey === isRtl;
+					if (!forward && scrollLeft === 0) {
+						updateOverscrollEffect('horizontal', 'before');
+					} else if (forward && scrollLeft === maxLeft) {
+						updateOverscrollEffect('horizontal', 'after');
+					}
+				}
+			}
 		}
 	}
 
@@ -496,23 +533,34 @@ class ScrollableBase extends Component {
 		}
 	}
 
-	playOverscrollEffect = (nodeRef, orientation, position, ratio) => {
-		const prefix = '--moon-scrollable-overscroll-ratio-';
-
-		nodeRef.style.setProperty(prefix + orientation + position, ratio);
-		if (ratio > 0) {
-			setTimeout(this.updateOverscrollEffect, 300, orientation, position, 0);
+	clearAllOverscrollEffects = () => {
+		const manualEffects = this.overscrollManualEffects;
+		while (manualEffects.length) {
+			const {nodeRef, orientation, position} = manualEffects.pop();
+			setTimeout(this.playOverscrollEffect, 300, nodeRef, orientation, position, 0, false);
 		}
 	}
 
-	updateOverscrollEffect = (orientation, position, ratio = 1) => {
+	playOverscrollEffect = (nodeRef, orientation, position, ratio, auto) => {
+		const prefix = '--moon-scrollable-overscroll-ratio-';
+
+		nodeRef.style.setProperty(prefix + orientation + position, ratio);
+		if (auto && ratio > 0) {
+			setTimeout(this.playOverscrollEffect, 300, nodeRef, orientation, position, 0, false);
+		}
+	}
+
+	updateOverscrollEffect = (orientation, position, ratio = 1, auto = true) => {
 		const
 			playOverscrollEffect = this.playOverscrollEffect,
 			nodeRef = this.overscrollRefs[orientation],
 			scrollability = this.getScrollabilities()[orientation];
 
 		if (nodeRef && scrollability) {
-			playOverscrollEffect(nodeRef, orientation, position, ratio);
+			playOverscrollEffect(nodeRef, orientation, position, ratio, auto);
+			if (!auto && ratio !== 0) {
+				this.overscrollManualEffects.push({nodeRef, orientation, position});
+			}
 		}
 	}
 
@@ -577,6 +625,7 @@ class ScrollableBase extends Component {
 			<UiScrollableBase
 				{...rest}
 				addEventListeners={this.addEventListeners}
+				clearAllOverscrollEffects={this.clearAllOverscrollEffects}
 				onFlick={this.onFlick}
 				onKeyDown={this.onKeyDown}
 				onWheel={this.onWheel}
