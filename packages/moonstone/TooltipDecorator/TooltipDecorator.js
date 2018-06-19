@@ -429,7 +429,6 @@ const TooltipDecorator = hoc(defaultConfig, (config, Wrapped) => {
 			const props = Object.assign(
 				{},
 				this.props,
-				this.renderTooltip(),
 				{
 					onBlur: this.handleBlur,
 					onFocus: this.handleFocus,
@@ -440,13 +439,27 @@ const TooltipDecorator = hoc(defaultConfig, (config, Wrapped) => {
 
 			delete props.tooltipDelay;
 			delete props.tooltipPosition;
-			delete props.tooltipCasing;
-			delete props.tooltipProps;
-			delete props.tooltipText;
-			delete props.tooltipWidth;
 
+			const {tooltipCasing, tooltipProps, tooltipText, tooltipWidth, ...rest} = props;
 			return (
-				<Wrapped {...props} />
+				<React.Fragment>
+					<FloatingLayerBase open={this.state.showing} onDismiss={this.hideTooltip} scrimType="none" key="tooltipFloatingLayer">
+						<Tooltip
+							aria-live="off"
+							role="alert"
+							{...tooltipProps}
+							arrowAnchor={this.state.arrowAnchor}
+							casing={tooltipCasing}
+							direction={this.state.tooltipDirection}
+							position={this.state.position}
+							tooltipRef={this.getTooltipRef}
+							width={tooltipWidth}
+						>
+							{tooltipText}
+						</Tooltip>
+					</FloatingLayerBase>
+					<Wrapped {...rest} />
+				</React.Fragment>
 			);
 		}
 	};
