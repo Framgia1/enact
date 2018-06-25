@@ -1,0 +1,4 @@
+[submodule "packages/spotlight/spatialNavigation"]
+	path = packages/spotlight/spatialNavigation
+	url = https://github.com/WICG/spatial-navigation
+	branch = release
