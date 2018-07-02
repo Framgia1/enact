@@ -438,12 +438,12 @@ const Spotlight = (function () {
 		 */
 		initialize: function (containerDefaults) {
 			if (!_initialized) {
-				window.addEventListener('blur', onBlur);
-				window.addEventListener('focus', onFocus);
-				window.addEventListener('keydown', onKeyDown);
-				window.addEventListener('keyup', onKeyUp);
-				window.addEventListener('mouseover', onMouseOver);
-				window.addEventListener('mousemove', onMouseMove);
+				document.addEventListener('blur', onBlur);
+				document.addEventListener('focus', onFocus);
+				document.addEventListener('keydown', onKeyDown);
+				document.addEventListener('keyup', onKeyUp);
+				document.addEventListener('mouseover', onMouseOver);
+				document.addEventListener('mousemove', onMouseMove);
 				setLastContainer(rootContainerId);
 				configureDefaults(containerDefaults);
 				configureContainer(rootContainerId);
@@ -457,12 +457,12 @@ const Spotlight = (function () {
 		 * @public
 		 */
 		terminate: function () {
-			window.removeEventListener('blur', onBlur);
-			window.removeEventListener('focus', onFocus);
-			window.removeEventListener('keydown', onKeyDown);
-			window.removeEventListener('keyup', onKeyUp);
-			window.removeEventListener('mouseover', onMouseOver);
-			window.removeEventListener('mousemove', onMouseMove);
+			document.removeEventListener('blur', onBlur);
+			document.removeEventListener('focus', onFocus);
+			document.removeEventListener('keydown', onKeyDown);
+			document.removeEventListener('keyup', onKeyUp);
+			document.removeEventListener('mouseover', onMouseOver);
+			document.removeEventListener('mousemove', onMouseMove);
 			Spotlight.clear();
 			_initialized = false;
 		},
