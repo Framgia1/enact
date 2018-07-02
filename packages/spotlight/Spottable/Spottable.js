@@ -366,7 +366,7 @@ const Spottable = hoc(defaultConfig, (config, Wrapped) => {
 			delete rest.spotlightDisabled;
 
 			if (tabIndex == null) {
-				tabIndex = -1;
+				tabIndex = 0;
 			}
 
 			if (spottable) {
